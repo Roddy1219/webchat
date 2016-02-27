@@ -32,8 +32,15 @@ $(document).ready(function() {
 
 function newMessage(form) {
     var message = form.formToDict();
+    message['channel'] = "pubroom";
     updater.socket.send(JSON.stringify(message));
     form.find("input[type=text]").val("").select();
+}
+
+function getUrlParam(name) {
+    var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); //构造一个含有目标参数的正则表达式对象
+    var r = window.location.search.substr(1).match(reg);  //匹配目标参数
+    if (r != null) return unescape(r[2]); return null; //返回参数值
 }
 
 jQuery.fn.formToDict = function() {
@@ -50,7 +57,8 @@ var updater = {
     socket: null,
 
     start: function() {
-        var url = "ws://" + location.host + "/chatsocket";
+        var username = getUrlParam('name');
+        var url = "ws://" + location.host + "/chatsocket?name="+username;
         updater.socket = new WebSocket(url);
         updater.socket.onmessage = function(event) {
             updater.showMessage(JSON.parse(event.data));

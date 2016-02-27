@@ -26,6 +26,7 @@ import tornado.web
 import tornado.websocket
 import os.path
 import uuid
+import datetime
 
 from tornado.options import define, options
 
@@ -52,19 +53,29 @@ class MainHandler(tornado.web.RequestHandler):
         self.render("index.html", messages=ChatSocketHandler.cache)
 
 class ChatSocketHandler(tornado.websocket.WebSocketHandler):
+
     waiters = set()
     cache = []
     cache_size = 200
+    default_room = "pubroom"
 
     def get_compression_options(self):
         # Non-None enables compression with default options.
         return {}
 
-    def open(self):
+    def open(self, *args, **kwargs):
+        username = self.get_query_argument('name')
+        username = username.encode('raw_unicode_escape')
+        if not username:
+            return False
+        logging.info("%s join the chat" % username)
+        self.username = username
+        self.new_join(username)
         ChatSocketHandler.waiters.add(self)
 
     def on_close(self):
         ChatSocketHandler.waiters.remove(self)
+        self.old_left(self.username)
 
     @classmethod
     def update_cache(cls, chat):
@@ -87,6 +98,9 @@ class ChatSocketHandler(tornado.websocket.WebSocketHandler):
         chat = {
             "id": str(uuid.uuid4()),
             "body": parsed["body"],
+            "channel": parsed["channel"],
+            "username": self.username,
+            "ts": datetime.datetime.now().strftime('%c'),
             }
         chat["html"] = tornado.escape.to_basestring(
             self.render_string("message.html", message=chat))
@@ -94,6 +108,25 @@ class ChatSocketHandler(tornado.websocket.WebSocketHandler):
         ChatSocketHandler.update_cache(chat)
         ChatSocketHandler.send_updates(chat)
 
+    def new_join(self, username):
+        chat = {
+            "id": str(uuid.uuid4()),
+            "body": "%s join ..." % username,
+            "ts": datetime.datetime.now().strftime('%c'),
+            }
+        chat["html"] = tornado.escape.to_basestring(
+            self.render_string("new_join.html", message=chat))
+        ChatSocketHandler.send_updates(chat)
+
+    def old_left(self, username):
+        chat = {
+            "id": str(uuid.uuid4()),
+            "body": "%s left ..." % username,
+            "ts": datetime.datetime.now().strftime('%c'),
+            }
+        chat["html"] = tornado.escape.to_basestring(
+            self.render_string("new_join.html", message=chat))
+        ChatSocketHandler.send_updates(chat)
 
 def main():
     tornado.options.parse_command_line()
