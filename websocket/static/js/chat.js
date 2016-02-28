@@ -16,25 +16,25 @@ $(document).ready(function() {
     if (!window.console) window.console = {};
     if (!window.console.log) window.console.log = function() {};
 
-    $("#messageform").live("submit", function() {
+    $("#messageform").bind("submit", function() {
         newMessage($(this));
         return false;
     });
-    $("#messageform").live("keypress", function(e) {
+    $("#messageform").bind("keypress", function(e) {
         if (e.keyCode == 13) {
             newMessage($(this));
             return false;
         }
     });
-    $("#message").select();
     updater.start();
+    document.getElementById('inbox').scrollTop=document.getElementById('inbox').scrollHeight;
 });
 
 function newMessage(form) {
     var message = form.formToDict();
     message['channel'] = "pubroom";
     updater.socket.send(JSON.stringify(message));
-    form.find("input[type=text]").val("").select();
+    $("#message").val("");
 }
 
 function getUrlParam(name) {
@@ -58,19 +58,30 @@ var updater = {
 
     start: function() {
         var username = getUrlParam('name');
+        if(!username){
+            alert("username error!");
+            return false;
+        }
         var url = "ws://" + location.host + "/chatsocket?name="+username;
         updater.socket = new WebSocket(url);
         updater.socket.onmessage = function(event) {
             updater.showMessage(JSON.parse(event.data));
         }
+        updater.socket.onclose = function(){
+            $("#inbox").append('<div class="sys-msg-error"><div>[System message] Connection lose, please refresh this page.</div></div>');
+        };
+        updater.socket.onerror = function(){
+            $("#inbox").append('<div class="sys-msg-error"><div>[System message] System error, please refresh this page.</div></div>');
+        };
     },
 
     showMessage: function(message) {
         var existing = $("#m" + message.id);
         if (existing.length > 0) return;
         var node = $(message.html);
-        node.hide();
+        // node.hide(); //取消渐变效果，因为刷新滚动条时无法确定消息框长度
         $("#inbox").append(node);
-        node.slideDown();
+        // node.slideDown();
+        document.getElementById ( 'inbox').scrollTop=document.getElementById ( 'inbox').scrollHeight;
     }
 };

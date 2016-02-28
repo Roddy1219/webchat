@@ -1,0 +1,22 @@
+#inbox {
+  overflow: scroll;
+  height: 450px;
+}
+
+.sys-msg-success {
+  color: green;
+  /*text-align: center;*/
+}
+
+.sys-msg-error {
+  color: red;
+  /*text-align: center;*/
+}
+
+.msg-head {
+  color: blue;
+}
+
+.msg-body {
+  margin-left: 15px;
+}

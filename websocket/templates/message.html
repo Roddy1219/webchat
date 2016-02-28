@@ -1,4 +1,4 @@
-<div class="message" id="m{{ message["id"] }}">
-    <div style="color: blue;">{% module linkify(message["username"])%} {% module linkify(message["ts"])%}</div>
-    <div style="margin-left: 15px;">{% module linkify(message["body"]) %}</div>
+<div id="m{{ message["id"] }}">
+    <div class="msg-head">{% module linkify(message["username"])%} {% module linkify(message["ts"])%}</div>
+    <div class="msg-body">{% module linkify(message["body"]) %}</div>
 </div>

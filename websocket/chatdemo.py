@@ -64,11 +64,11 @@ class ChatSocketHandler(tornado.websocket.WebSocketHandler):
         return {}
 
     def open(self, *args, **kwargs):
-        username = self.get_query_argument('name')
+        username = self.get_query_argument('name', None)
         username = username.encode('raw_unicode_escape')
         if not username:
             return False
-        logging.info("%s join the chat" % username)
+        logging.info("[%s] join the chat" % username)
         self.username = username
         self.new_join(username)
         ChatSocketHandler.waiters.add(self)
@@ -111,7 +111,7 @@ class ChatSocketHandler(tornado.websocket.WebSocketHandler):
     def new_join(self, username):
         chat = {
             "id": str(uuid.uuid4()),
-            "body": "%s join ..." % username,
+            "body": "[System message] %s sign in" % username,
             "ts": datetime.datetime.now().strftime('%c'),
             }
         chat["html"] = tornado.escape.to_basestring(
@@ -121,7 +121,7 @@ class ChatSocketHandler(tornado.websocket.WebSocketHandler):
     def old_left(self, username):
         chat = {
             "id": str(uuid.uuid4()),
-            "body": "%s left ..." % username,
+            "body": "[System message] %s sign out" % username,
             "ts": datetime.datetime.now().strftime('%c'),
             }
         chat["html"] = tornado.escape.to_basestring(
